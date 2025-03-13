@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const Catway = new Schema({
+const catwaySchema = new Schema({
     catwayNumber: {
         type: Number,
         trim: true,
@@ -17,4 +17,7 @@ const Catway = new Schema({
         type: String,
         required: true
     } 
-});
+}, {timestamps: true}
+);
+
+module.exports = mongoose.model('Catway', catwaySchema);

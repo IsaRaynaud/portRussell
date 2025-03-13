@@ -1,5 +1,8 @@
 const express = require('express');
+
 const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, 'env/.env') });
+
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
@@ -12,10 +15,7 @@ const app = express();
 const mongodb = require('./db/mongo');
 mongodb.initClientDbConnection();
 
-app.use(cors({
-    exposedHeaders: [Authorization],
-    origin: '*'
-}));
+app.use(cors());
 
 app.use(logger('dev'));
 app.use(express.json());
