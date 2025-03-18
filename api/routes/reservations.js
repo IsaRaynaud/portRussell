@@ -1,11 +1,17 @@
 const express = require('express');
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 const service = require('../services/reservations');
+
+router.use((req, res, next) => {
+    req.catwayNumber = parseInt(req.params.catwayNumber);
+    console.log("Catway Number extrait :", req.catwayNumber);
+    next();
+});
 
 router.get('/', service.get);
 router.get('/:idReservation', service.getById);
 router.post('/', service.add);
-router.delete('/:id', service.delete);
+router.delete('/:idReservation', service.delete);
 
 module.exports = router;

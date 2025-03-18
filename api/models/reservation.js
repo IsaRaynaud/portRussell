@@ -3,8 +3,7 @@ const Schema = mongoose.Schema;
 
 const reservationSchema = new Schema({
     catwayNumber: {
-        type: Schema.Types.ObjectId,
-        ref: 'Catway',
+        type: Number,
         required: true,       
     },
     clientName: {
