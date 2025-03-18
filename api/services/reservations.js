@@ -2,8 +2,6 @@ const Reservation = require('../models/reservation');
 
 //Callback pour afficher la liste des réservations d'un catway
 exports.get = async (req, res, next) => {
-    console.log("Catway Number extrait :", req.params.catwayNumber);
-    console.log("Catway Number reçu :", req.params.catwayNumber);
     const catwayNumber = parseInt(req.params.catwayNumber);
 
     if (isNaN(catwayNumber)) {

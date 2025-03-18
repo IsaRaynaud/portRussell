@@ -44,6 +44,33 @@ exports.add = async (req, res, next) => {
     }
 }
 
+//Callback pour modifier intégralement un catway
+exports.updateAll = async (req, res, next) => {
+    const id = req.params.id;
+
+    const temp = {};
+        if (req.body.catwayNumber !== undefined) temp.catwayNumber = req.body.catwayNumber;
+        if (req.body.type !== undefined) temp.type = req.body.type;
+        if (req.body.catwayState !== undefined) temp.catwayState = req.body.catwayState;
+
+    try {
+        if (Object.keys(temp).length === 0) {
+            console.log("Aucune donnée pour la mise à jour.");
+            return res.status(400).json({ message: "Aucune donnée à mettre à jour" });
+        }
+
+        let updatedCatway = await Catway.findByIdAndUpdate(id, temp, {new: true, runValidators: true });
+
+        if (!updatedCatway) {
+            return res.status(404).json({message: "Catway introuvable"});
+        }
+
+        return res.status(200).json(updatedCatway);
+    } catch (error) {
+        return res.status(500).json({message: "Erreur lors de la mise à jour:", error: error.message});
+    }
+}
+
 //Callback pour modifier un catway
 exports.update = async (req, res, next) => {
     const id = req.params.id

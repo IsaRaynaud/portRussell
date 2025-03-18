@@ -1,4 +1,3 @@
-console.log("Le serveur démarre...");
 const express = require('express');
 
 const path = require('path');
@@ -23,16 +22,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-console.log('Montage des routes...');
 app.use('/', indexRouter);
-console.log("Route '/' chargée");
 app.use('/catways', catwaysRouter);
-console.log("Route '/catways' chargée");
-app.use('/catways/:catwayNumber/reservations', (req, res, next) => {
-    req.params.catwayNumber = req.params.catwayNumber;
-    next();
-}, reservationsRouter);
-console.log("Route '/reservations' chargée");
+app.use('/catways/:catwayNumber/reservations', reservationsRouter);
 
 app.use(function(req, res, next) {
     res.status(404).json({name:'API', version: '1.0', status:404, message: 'Introuvable'});
