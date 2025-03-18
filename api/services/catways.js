@@ -12,16 +12,16 @@ exports.get = async (req, res, next) => {
 
 //Callback pour afficher un catway particulier
 exports.getById = async (req, res, next) => {
-    const id = req.params.id
+    const catwayNumber = parseInt(req.params.catwayNumber);
 
     try {
-        let catway = await Catway.findById(id);
+        let catway = await Catway.findOne({ catwayNumber: catwayNumber});
 
         if (catway) {
             return res.status(200).json(catway);
         }
 
-        return res.status(404).json('Le catway est introuvable.');
+        return res.status(404).json({ message: 'Le catway est introuvable.'});
     } catch (error) {
         return res.status(500).json({ message: "Erreur interne", error: error.message });
     }
@@ -46,7 +46,7 @@ exports.add = async (req, res, next) => {
 
 //Callback pour modifier intégralement un catway
 exports.updateAll = async (req, res, next) => {
-    const id = req.params.id;
+    const catwayNumber = parseInt(req.params.catwayNumber);
 
     const temp = {};
         if (req.body.catwayNumber !== undefined) temp.catwayNumber = req.body.catwayNumber;
@@ -59,7 +59,7 @@ exports.updateAll = async (req, res, next) => {
             return res.status(400).json({ message: "Aucune donnée à mettre à jour" });
         }
 
-        let updatedCatway = await Catway.findByIdAndUpdate(id, temp, {new: true, runValidators: true });
+        let updatedCatway = await Catway.findByIdAndUpdate(catwayNumber, temp, {new: true, runValidators: true });
 
         if (!updatedCatway) {
             return res.status(404).json({message: "Catway introuvable"});
@@ -73,7 +73,7 @@ exports.updateAll = async (req, res, next) => {
 
 //Callback pour modifier un catway
 exports.update = async (req, res, next) => {
-    const id = req.params.id
+    const catwayNumber = parseInt(req.params.catwayNumber);
     const temp = ({
         catwayNumber: req.body.catwayNumber,
         type: req.body.type,
@@ -81,7 +81,7 @@ exports.update = async (req, res, next) => {
     });
 
     try {
-        let catway = await Catway.findOne({_id : id});
+        let catway = await Catway.findOne({ catwayNumber : catwayNumber});
 
         if (catway) {
             Object.keys(temp).forEach((key) => {
@@ -100,10 +100,10 @@ exports.update = async (req, res, next) => {
 
 //Callback pour supprimer un catway
 exports.delete = async (req, res, next) => {
-    const id = req.params.id
+    const catwayNumber = parseInt(req.params.catwayNumber);
 
     try {
-        await Catway.deleteOne({_id : id});
+        await Catway.deleteOne({catwayNumber : catwayNumber});
 
         return res.status(204).json({message: 'Suppression effectuée'});
     } catch (error) {
