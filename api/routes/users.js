@@ -3,10 +3,11 @@ const router = express.Router();
 
 const service = require('../services/users');
 
-const { checkJWT, isAdmin} = require('../middleware/private');
+const { checkJWT, isAdmin } = require('../middlewares/private');
 
+router.get('/', service.getAll);
 router.get('/:id', service.getById);
-router.put('/add', service.add);
+router.post('/', service.add);
 router.patch('/:id', service.update);
 router.delete('/:id', service.delete);
 router.post('/login', service.authenticate);

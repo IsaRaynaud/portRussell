@@ -43,6 +43,16 @@ exports.authenticate = async (req, res, next) => {
     }
 }
 
+//Callback pour afficher la liste de tous les utilisateurs
+exports.getAll = async (req, res, next) => {
+    try {
+        const users = await User.find({}, '-password');
+        return res.status(200).json(users);
+    } catch (error) {
+        return res.status(500).json({message : "Erruer lors de la récupération des données :", error: error.message });
+    }
+}
+
 //Callback pour trouver un utilisateur
 exports.getById = async (req, res, next) => {
     const id = req.params.id
@@ -53,7 +63,7 @@ exports.getById = async (req, res, next) => {
         if (user) {
             return res.status(200).json(user);
         }
-        return res.status(404).json('utilisateur_introuvable');
+        return res.status(404).json('Utilisateur introuvable');
     } catch (error) {
         return res.status(501).json(error);
     }
@@ -61,28 +71,28 @@ exports.getById = async (req, res, next) => {
 
 //Callback pour ajouter un utilisateur
 exports.add = async (req, res, next) => {
-    const temp = ({
-        email: req.body.email,
-        password: req.body.password,
-        role: req.body.role,
-        adminName: req.body.adminName,
-        clientName: req.body.clientName,
-        boatName: req.body.boatName
-    });
+    console.log("Requête reçue pour ajout d'un utilisateur :", req.body);
+    const { email, password, role, adminName, clientName, boatName } = req.body;
 
     try {
+        if (!email || !password || !role) {
+            return res.status(400).json({ message: 'Email, mot de passe et rôle sont obligatoires.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         let newUser;
 
         if (role === 'admin') {
             newUser = new Admin({ email, password: hashedPassword, adminName });
         } else if (role === 'client') {
-            newUser = new Client({ email, password: hashedPassword, clientName, clientBoat });
+            newUser = new Client({ email, password: hashedPassword, clientName, boatName });
         } else {
             return res.status(400).json({ message: 'Rôle invalide' });
         }
 
         await newUser.save();
-        res.status(201).json({message: "Le nouvel utilisateur a été créé."});
+        res.status(201).json({message: "Le nouvel utilisateur a été créé.", user: newUser});
     } catch (error) {
         res.status(500).json({message: "Erreur lors de la création de l'utilisateur :", error: error.message});
     }

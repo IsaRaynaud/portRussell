@@ -29,7 +29,7 @@ const Client = User.discriminator('client', new mongoose.Schema({
         type: String,
         required: true
     },
-    clientBoat: {
+    boatName: {
         type: String,
         required: true
     }
