@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bienvenue au Port de plaisance Russell</title>
-    <!-- <link rel="stylesheet" href="/css/styles.css"> -->
 </head>
 <body>
     <h1>Bienvenue au port de plaisance Russell</h1>
     <p>Texte de présentation</p>
-
-    <form action="/auth/login" method="POST">
+    <h2>Accéder à votre espace</h2>
+    <form id="login-form">
         <div>
-            <label for="email">Email :</label>
+            <label for="email">E-mail :</label>
             <input type="email" name="email"required>
         </div>
 
@@ -21,7 +20,41 @@
             <input type="password" name="password" required>
         </div>
 
-        <button type="submit" class="btn btn-primary">Se connecter</button>
+        <button type="submit">Se connecter</button>
     </form>
+    <h2>Par où commencer ?</h2>
+    <p>Si c'est votre première connexion, n'hésitez pa sà lire notre documentation pour utiliser notre site.</p>
+    <script>
+        document.querySelector("#login-form").addEventListener("submit", async (e) => {
+            e.preventDefault();    
+
+            const email = document.querySelector('input[name="email"]').value;
+            const password = document.querySelector('input[name="password"]').value;
+    
+            try {
+                const response = await fetch("/users/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+    
+                const data = await response.json();
+                console.log("Réponse du serveur :", data);
+    
+                if (response.ok) {
+                    console.log("Token reçu:", data.token);
+                    localStorage.setItem("token", data.token);
+
+                    console.log("Token enregistré dans localStorage :", localStorage.getItem("token"));
+    
+                    window.location.href = data.redirect;
+                } else {
+                    alert("Erreur : " + data.message);
+                }
+            } catch (error) {
+                console.error("Erreur lors de la connexion :", error);
+            }
+        });
+    </script>
 </body>
 </html>

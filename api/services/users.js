@@ -2,11 +2,10 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { User, Admin, Client } = require('../models/users');
 
-//const JWT_SECRET = process.env.JWT_SECRET_KEY;
-
 //Callback pour la connexion d'un utilisateur
 exports.authenticate = async (req, res, next) => {
     const {email, password} = req.body;
+    console.log("Tentative de connexion avec : ", email);
 
     try {
         let user = await User.findOne({email : email});
@@ -14,9 +13,11 @@ exports.authenticate = async (req, res, next) => {
         if (user) {
             bcrypt.compare(password, user.password, function(err, response) {
                 if (err) {
-                    throw new Error(err);
+                    console.log("Erreur bcrypt :", err);
+                    return res.status(500).json({ message: "Erreur interne" });
                 }
                 if (response) {
+                    console.log("Authentification réussie pour :", email);
                     delete user._doc.password;
 
                     const expireIn = 24 * 60 * 60;
@@ -24,22 +25,29 @@ exports.authenticate = async (req, res, next) => {
                         user: user
                     },
                     process.env.JWT_SECRET_KEY,
-                    {
-                        expiresIn: expireIn
-                    }
+                    { expiresIn: expireIn }
                 );
+
+                console.log("Token généré :", token);
                 res.header('Authorization', 'Bearer ' + token);
 
-                return res.status(200).json('authentification_reussie');
+                if (user.role === 'admin') {
+                    return res.json({ redirect: "/users/administrateurs", token});
+                    } else {
+                    return res.json({ redirect: "/users/tableaudebord", token });
+                    }
+                } else {
+                    console.log("Mot de passe incorrect pour :", email);
+                    return res.status(403).json({message :"Echec d'authentification"});
                 }
-
-                return res.status(403).json('echec_authentification');
             });
         } else {
-            return res.status(404).json('utilisateur_introuvable');
+            console.log("Utilisateur introuvable :", email);
+            return res.status(404).json("Utilisateur introuvable");
         }
     } catch (error) {
-        return res.status(501).json(error);
+        console.log("Erreur dans l'authentification :", error);
+        return res.status(500).json({ message: "Erreur serveur", error });
     }
 }
 
@@ -49,7 +57,7 @@ exports.getAll = async (req, res, next) => {
         const users = await User.find({}, '-password');
         return res.status(200).json(users);
     } catch (error) {
-        return res.status(500).json({message : "Erruer lors de la récupération des données :", error: error.message });
+        return res.status(500).json({message : "Erreur lors de la récupération des données :", error: error.message });
     }
 }
 
