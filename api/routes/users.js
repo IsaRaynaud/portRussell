@@ -15,8 +15,12 @@ router.get('/admin-data', checkJWT, isAdmin, (req, res, next) => {
 });
 
 //Accès au tableau de bord client
-router.get('/tableaudebord', checkJWT, isClient, (req, res, next) => {
-    res.json({message : "Bienvenue !"});
+router.get('/tableaudebord', (req, res, next) => {
+    res.render('tableaudebord');
+});
+
+router.get('/client-data', checkJWT, isClient, (req, res, next) => {
+    res.json({message : "Bienvenue dans votre tableau de bord !"});
 });
 
 router.get('/', service.getAll);

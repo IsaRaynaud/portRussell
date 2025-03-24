@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord - client</title>
+</head>
+<body>
+    <h1>Tableau de bord</h1>
+    <div id="dashboard-content">
+        <!-- Le contenu du tableau de bord sera affiché ici -->
+    </div>
+    <button id="logout-btn">Se déconnecter</button>
+
+    <script>
+        async function fetchDashboard() {
+            const token = localStorage.getItem("token");
+            console.log("Token récupéré de localStorage :", token);
+
+            if (!token) {
+                alert("Token non trouvé ! Veuillez vous connecter.");
+                window.location.href = "/";
+                return;
+            }
+
+            console.log("Token envoyé:", token);
+
+            try {
+                const response = await fetch("/users/client-data", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                console.log("En-têtes de la requête : ", {
+            "Authorization": `Bearer ${token}`});
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("dashboard-content").innerHTML = "<p>" + data.message + "</p>";
+                } else {
+                    console.log("Erreur lors de l'accès au tableau de bord");
+                    const errorData = await response.json();
+                    alert(errorData.message || "Erreur inconnue");
+
+                }
+            } catch (error) {
+                console.error("Erreur lors de la requête API", error);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "/";
+        }
+        
+        document.getElementById("logout-btn").addEventListener("click", logout);
+
+        fetchDashboard();
+    </script>
+</body>
+</html>
