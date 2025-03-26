@@ -6,12 +6,32 @@
     <title>Tableau de bord - Administrateur</title>
 </head>
 <body>
-    <h1>Tableau de bord</h1>
-    <div id="dashboard-content">
-        <!-- Le contenu du tableau de bord sera affiché ici -->
-    </div>
-    <button id="logout-btn">Se déconnecter</button>
+    <header>
+        <!-- Ajouter logo -->
+        <h1>Tableau de bord</h1>
+    </header>
+    <main>
+        <p>A partir de cette page, vous pourrez gérer les utilisateurs, les pontons et les réservations.</p>
+        <div>
+            <h2>Gestion des usagers</h2>
+            <p>Cliquez ici pour afficher la liste de tous les utilisateurs, administrateurs ou clients :</p>
+            <button><a href="/users">Liste des utilisateurs</a></button>
+        </div>
+        <div>
+            <h2>Gestion des pontons</h2>
+            <p>Cliquez ici pour afficher la Liste de tous les pontons du port :</p>
+            <button><a href="/catways">Liste des pontons</a></button>
+        </div>
+        <div>
+            <h2>Gestion des réservations</h2>
+            <p>???</p>
+        </div>
 
+        <button id="logout-btn">Se déconnecter</button>
+    </main>
+    <footer>
+        <!-- Lien mentions légales et contact -->
+    </footer>
     <script>
         async function fetchDashboard() {
             const token = localStorage.getItem("token");
@@ -36,15 +56,7 @@
                 console.log("En-têtes de la requête : ", {
             "Authorization": `Bearer ${token}`});
 
-                if (response.ok) {
-                    const data = await response.json();
-                    document.getElementById("dashboard-content").innerHTML = "<p>" + data.message + "</p>";
-                } else {
-                    console.log("Erreur lors de l'accès au tableau de bord");
-                    const errorData = await response.json();
-                    alert(errorData.message || "Erreur inconnue");
 
-                }
             } catch (error) {
                 console.error("Erreur lors de la requête API", error);
             }

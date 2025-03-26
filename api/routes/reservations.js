@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 
 const service = require('../services/reservations');
+const { checkJWT, isAdmin, isClient } = require('../middlewares/private');
+
+router.use(checkJWT, isAdmin, isClient)
 
 router.use((req, res, next) => {
     req.catwayNumber = parseInt(req.params.catwayNumber);

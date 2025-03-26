@@ -4,148 +4,101 @@ const { User, Admin, Client } = require('../models/users');
 
 //Callback pour la connexion d'un utilisateur
 exports.authenticate = async (req, res, next) => {
-    const {email, password} = req.body;
-    console.log("Tentative de connexion avec : ", email);
-
     try {
-        let user = await User.findOne({email : email});
+        const {email, password} = req.body;
+        console.log("Tentative de connexion avec : ", email);
 
-        if (user) {
-            bcrypt.compare(password, user.password, function(err, response) {
-                if (err) {
-                    console.log("Erreur bcrypt :", err);
-                    return res.status(500).json({ message: "Erreur interne" });
-                }
-                if (response) {
-                    console.log("Authentification réussie pour :", email);
-                    delete user._doc.password;
+        const user = await User.findOne({email});
 
-                    const expireIn = 24 * 60 * 60;
-                    const token = jwt.sign({
-                        user: user
-                    },
-                    process.env.JWT_SECRET_KEY,
-                    { expiresIn: expireIn }
-                );
-
-                console.log("Token généré :", token);
-                res.header('Authorization', 'Bearer ' + token);
-
-                if (user.role === 'admin') {
-                    return res.json({ redirect: "/users/administrateurs", token});
-                    } else {
-                    return res.json({ redirect: "/users/tableaudebord", token });
-                    }
-                } else {
-                    console.log("Mot de passe incorrect pour :", email);
-                    return res.status(403).json({message :"Echec d'authentification"});
-                }
-            });
-        } else {
-            console.log("Utilisateur introuvable :", email);
-            return res.status(404).json("Utilisateur introuvable");
+        if (!user) {
+            return res.status(401).json({ message : "Identifiants incorrects"});
         }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            return res.status(401).json({ message : "Identifiants incorrects"});
+        }
+
+        const token = jwt.sign(
+            { user: { id: user.id, role: user.role }},
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: "1h" }
+        );
+
+        let redirect = '';
+        if (user.role === 'admin') {
+            redirect = '/users/administrateurs';
+        } else if (user.role === 'client') {
+            redirect = 'users/tableaudebord';
+        }
+
+        return res.status(200).json({ token, redirect, role: user.role });
     } catch (error) {
-        console.log("Erreur dans l'authentification :", error);
-        return res.status(500).json({ message: "Erreur serveur", error });
-    }
+        console.error("Erreur d'authentification : ", error);
+        return res.status(500).json({ message : "Erreur interne du serveur"});
+    };
 }
 
 //Callback pour afficher la liste de tous les utilisateurs
 exports.getAll = async (req, res, next) => {
     try {
+        console.log("Modèle User :", User);
         const users = await User.find({}, '-password');
-        return res.status(200).json(users);
+
+        console.log("Utilisateurs récupérés :", users.length);
+        return users;
     } catch (error) {
-        return res.status(500).json({message : "Erreur lors de la récupération des données :", error: error.message });
-    }
-}
-
-//Callback pour trouver un utilisateur
-exports.getById = async (req, res, next) => {
-    const id = req.params.id
-
-    try {
-        let user = await User.findById(id);
-
-        if (user) {
-            return res.status(200).json(user);
-        }
-        return res.status(404).json('Utilisateur introuvable');
-    } catch (error) {
-        return res.status(501).json(error);
-    }
+        throw new Error("Erreur lors de la récupération des utilisateurs: " + error.message);
+    };
 }
 
 //Callback pour ajouter un utilisateur
-exports.add = async (req, res, next) => {
-    console.log("Requête reçue pour ajout d'un utilisateur :", req.body);
-    const { email, password, role, adminName, clientName, boatName } = req.body;
+exports.add = async (userData) => {
+    console.log("Requête reçue pour ajout d'un utilisateur :", userData);
 
-    try {
-        if (!email || !password || !role) {
-            return res.status(400).json({ message: 'Email, mot de passe et rôle sont obligatoires.' });
-        }
+    const { email, password, role, adminName, clientName, boatName } = userData;
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        let newUser;
-
-        if (role === 'admin') {
-            newUser = new Admin({ email, password: hashedPassword, adminName });
-        } else if (role === 'client') {
-            newUser = new Client({ email, password: hashedPassword, clientName, boatName });
-        } else {
-            return res.status(400).json({ message: 'Rôle invalide' });
-        }
-
-        await newUser.save();
-        res.status(201).json({message: "Le nouvel utilisateur a été créé.", user: newUser});
-    } catch (error) {
-        res.status(500).json({message: "Erreur lors de la création de l'utilisateur :", error: error.message});
+    if (!email || !password || !role) {
+        throw new Error('Email, mot de passe et rôle sont obligatoires.');
     }
-}
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    let newUser;
+
+    if (role === 'admin') {
+        newUser = new Admin({ email, password: hashedPassword, adminName });
+    } else if (role === 'client') {
+        newUser = new Client({ email, password: hashedPassword, clientName, boatName });
+    } else {
+        throw new Error('Rôle invalide');
+    }
+
+    await newUser.save();
+    console.log("✅ Utilisateur ajouté :", newUser);
+
+    return newUser;
+};
 
 //Callback pour mettre à jour un utilisateur
-exports.update = async (req, res, next) => {
-    const id = req.params.id
-    const temp = ({
-        email: req.body.email,
-        password: req.body.password,
-        role: req.body.role,
-        adminName: req.body.adminName,
-        clientName: req.body.clientName,
-        boatName: req.body.boatName
+exports.update = async (id, updateData) => {
+    const user = await User.findById(id);
+    if (!user) throw new Error("Utilisateur introuvable");
+
+    Object.keys(updateData).forEach(key => {
+        if (updateData[key]) user[key] = updateData[key];
     });
 
-    try {
-        let user = await User.findOne({_id: id});
-
-        if (user) {
-            Object.keys(temp).forEach((key) => {
-                if (!!temp[key]) {
-                    user[key] = temp[key];
-                }
-            });
-
-            await user.save();
-            return res.status(201).json(user);
-        }
-        return res.status(404).json({ message: "Utilisateur introuvable"});
-    } catch (error) {
-        return res.status(501).json(error);
-    }
-}
+    await user.save();
+    return user;
+};
 
 //Callback pour supprimer un utilisateur
-exports.delete = async (req, res, next) => {
-    const id = req.params.id;
-
-    try {
-        await User.deleteOne({_id: id});
-
-        return res.status(204).json({ message : "L'utilisateur a bien supprimé"});
-    } catch (error) {
-        return res.status(501).json(error);
+exports.delete = async (id) => {
+    const result = await User.deleteOne({ _id: id });
+    if (result.deletedCount === 0) {
+        throw new Error("Aucun utilisateur supprimé");
     }
-}
+    return { message: "Utilisateur supprimé" };
+};

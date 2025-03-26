@@ -6,24 +6,31 @@
     <title>Tableau de bord - client</title>
 </head>
 <body>
-    <h1>Tableau de bord</h1>
-    <div id="dashboard-content">
-        <!-- Le contenu du tableau de bord sera affiché ici -->
-    </div>
-    <button id="logout-btn">Se déconnecter</button>
+    <header>
+        <!-- Ajouter logo -->
+        <h1>Tableau de bord</h1>
+    </header>
+    <main>
+        <p>A partir de cette page, vous pourrez gérer les réservations des pontons pour votre bateau.</p>
+        <div>
+            <h2>Gestion des réservations</h2>
+            <p>???</p>
+        </div>
 
+        <button id="logout-btn">Se déconnecter</button>
+    </main>
+    <footer>
+        <!-- Lien mentions légales et contact -->
+    </footer>
     <script>
         async function fetchDashboard() {
             const token = localStorage.getItem("token");
-            console.log("Token récupéré de localStorage :", token);
 
             if (!token) {
                 alert("Token non trouvé ! Veuillez vous connecter.");
                 window.location.href = "/";
                 return;
             }
-
-            console.log("Token envoyé:", token);
 
             try {
                 const response = await fetch("/users/client-data", {
@@ -32,9 +39,6 @@
                         "Authorization": `Bearer ${token}`
                     }
                 });
-
-                console.log("En-têtes de la requête : ", {
-            "Authorization": `Bearer ${token}`});
 
                 if (response.ok) {
                     const data = await response.json();
