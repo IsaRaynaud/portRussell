@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord - Client</title>
+</head>
+<body>
+    <header>
+        <!-- Ajouter logo -->
+        <h1>Tableau de bord</h1>
+    </header>
+    <main>
+        <p>A partir de cette page, vous pourrez gérer vos réservations de ponton pour votre bateau.</p>
+        <div>
+            <h2>Liste des pontons pour gérer les réservations</h2>
+            <p>Cliquez ici pour afficher la Liste de tous les pontons du port :</p>
+            <button id="goToCatways">Liste des pontons</button>
+        </div>
+
+        <button id="logout-btn">Se déconnecter</button>
+    </main>
+    <footer>
+        <!-- Lien mentions légales et contact -->
+    </footer>
+    <script>
+        async function fetchDashboard() {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                alert("Token non trouvé ! Veuillez vous connecter.");
+                window.location.href = "/";
+                return;
+            }
+
+            try {
+                const response = await fetch("/users/admin-data", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+
+            } catch (error) {
+                console.error("Erreur lors de la requête API", error);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "/";
+        }
+        
+        document.getElementById("logout-btn").addEventListener("click", logout);
+
+        fetchDashboard();
+
+        document.getElementById("goToCatways").addEventListener("click", async () => {
+            const token = localStorage.getItem("token");
+            if (!token) return window.location.href = "/";    
+            window.location.href = "/catways";
+        });
+    </script>
+</body>
+</html>

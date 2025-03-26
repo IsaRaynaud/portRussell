@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Réservations - Ponton <%= catwayNumber %></title>
+</head>
+<body>
+  <h1>Réservations pour le ponton <%= catwayNumber %></h1>
+
+  <ul id="reservation-list"></ul>
+
+    <h2>Ajouter une réservation</h2>
+    <form id="add-res-form">
+      <input type="text" id="clientName" name="clientName" placeholder="Nom client" required>
+      <input type="text" name="boatName" placeholder="Nom bateau" required>
+      <input type="date" name="checkIn" required>
+      <input type="date" name="checkOut" required>
+      <button type="submit">Réserver</button>
+    </form>
+<a href="/catways">Retour aux pontons</a>
+  <script>
+    const token = localStorage.getItem("token");
+    let catwayNumber = <%= catwayNumber %>;
+
+    if (!token) {
+      alert("Non connecté");
+      window.location.href = "/";
+    }
+
+    async function loadReservations() {
+      try {
+        const res = await fetch(`/catways/${catwayNumber}/reservations/api`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Cache-Control': 'no-cache'
+          }
+        });
+
+        if (!res.ok) throw new Error("Erreur d'accès");
+
+        const { reservations, role, clientName, empty } = await res.json();
+
+        const clientNameInput = document.getElementById('clientName');
+        if (clientNameInput) {
+            if (role === "client" && clientName) {
+                clientNameInput.value = clientName;
+                clientNameInput.ReadOnly = true;
+            } else {
+                clientNameInput.value = "";
+                clientNameInput.ReadOnly = false;
+            }
+        }
+
+        const list = document.getElementById("reservation-list");
+        list.innerHTML = "";
+
+        if (empty) {
+        list.innerHTML = "<li>Aucune réservation pour ce ponton pour le moment.</li>";
+        return;
+        }
+
+        reservations.forEach(r => {
+        const li = document.createElement('li');
+        const isOwner = clientName && r.clientName.trim().toLowerCase() === clientName.trim().toLowerCase();
+        li.innerHTML = `
+            <strong>Nom du client :</strong> ${r.clientName}<br>
+            <strong>Nom du bateau :</strong> ${r.boatName}<br>
+            <strong>Arrivée au ponton le :</strong> ${new Date(r.checkIn).toLocaleDateString()}<br>
+            <strong>Départ du ponton le :</strong> ${new Date(r.checkOut).toLocaleDateString()}
+            ${role === "admin" || isOwner ? `
+            <br>
+            <button class="delete-btn" data-id="${r._id}">Supprimer</button>
+            ` : ""}
+        `;
+        list.appendChild(li);
+        });
+
+        document.getElementById("add-res-form").style.display = "block";
+      } catch (err) {
+        console.error(err);
+        alert("Erreur lors du chargement des réservations");
+      }
+    }
+
+    document.getElementById("add-res-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        clientName: form.clientName.value,
+        boatName: form.boatName.value,
+        checkIn: form.checkIn.value,
+        checkOut: form.checkOut.value
+      };
+
+      const res = await fetch(`/catways/${catwayNumber}/reservations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        alert("Réservation ajoutée !");
+        location.reload();
+      } else {
+        const err = await res.json();
+        alert(`Erreur : ${err.message}`);
+      }
+    });
+
+    document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+            const id = e.target.dataset.id;
+            if (!confirm("Supprimer cette réservation ?")) return;
+
+            try {
+            const res = await fetch(`/catways/${catwayNumber}/reservations/${id}`, {
+                method: 'DELETE',
+                headers: {
+                Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (res.ok) {
+                alert("Réservation supprimée");
+                location.reload();
+            } else {
+                const err = await res.json();
+                alert(`Erreur : ${err.message}`);
+            }
+            } catch (err) {
+            console.error(err);
+            alert("Erreur serveur");
+            }
+        }
+        });
+
+    loadReservations();
+  </script>
+</body>
+</html>

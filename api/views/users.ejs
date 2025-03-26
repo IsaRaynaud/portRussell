@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des utilisateurs</title>
+</head>
+<body>
+    <h1>Gestion des utilisateurs</h1>
+    <p>Retrouvez ci-dessous la liste de tous les utilisateurs et des formulaires pour ajouter, mettre à jour ou supprimer des personnes.</p>
+    <button><a href="#ajout">Ajouter un utilisateur (administrateur ou client)</a></button>
+    <button><a href="/users/administrateurs">Retour au tableau de bord</a></button>
+    <h2>Liste des utilisateurs</h2>
+    <ul>
+        <% users.forEach(user => { %>
+            <li>
+              <strong>Email :</strong> <%= user.email %><br>
+              <strong>Rôle :</strong> <%= user.role %><br>
+              <% if (user.role === "admin") { %>
+                <strong>Nom :</strong> <%= user.adminName %><br>
+              <% } else { %>
+                <strong>Nom :</strong> <%= user.clientName %><br>
+                <strong>Bateau :</strong> <%= user.boatName %><br>
+              <% } %>
+        
+              <button class="edit-user-btn" data-user='<%- JSON.stringify(user) %>'>Modifier</button>
+              <button class="delete-user-btn" data-id="<%= user._id %>">Supprimer</button>
+            </li>
+          <% }) %>
+    </ul>
+    <!-- Ajouter un utilisateur-->
+    <h2 id="ajout">Ajouter un utilisateur</h2>
+        <form id="userForm">
+            <div>
+                <label for="email">E-mail:</label>
+                <input type="email" id="email" name="email" required />
+            </div>
+            <div>
+                <label for="password">Mot de passe:</label>
+                <input type="password" id="password" name="password" required />
+            </div>
+            <div>
+                <label for="role">Rôle:</label>
+                <select id="role" name="role" required>
+                    <option value="admin">Admin</option>
+                    <option value="client">Client</option>
+                </select>
+            </div>
+            <!-- Champ si rôle admin -->
+            <div id="adminFields" style="display: none;">
+                <label for="adminName">Nom de l'admin:</label>
+                <input type="text" id="adminName" name="adminName" required/>
+            </div>
+            <!-- Champs si rôle client -->
+            <div id="clientFields" style="display: none;">
+                <label for="clientName">Nom du client:</label>
+                <input type="text" id="clientName" name="clientName" required />
+                <label for="boatName">Nom du bateau:</label>
+                <input type="text" id="boatName" name="boatName" required />
+            </div>
+            <div>
+                <button type="submit">Ajouter l'utilisateur</button>
+            </div>
+        </form>
+    <h2>Mettre à jour un utilisateur</h2>
+    <form id="editUserForm" style="display: none;">
+        <input type="hidden" name="id" id="edit-id"> 
+        <div> 
+            <label>Email :</label><br>
+            <input type="email" name="email" id="edit-email"><br>
+        </div>
+        <div> 
+            <label>Mot de passe :</label><br>
+            <input type="password" name="password" id="edit-password"><br>
+        </div>
+        <div>
+            <label>Rôle : Non modifiable</label><br>
+            <input type="hidden" id="edit-role">
+        </div> 
+        <div id="editAdminFields" style="display: none;">
+            <label>Nom :</label><br>
+            <input type="text" name="adminName" id="edit-adminName"><br>
+        </div>
+        <div id="editClientFields" style="display: none;">
+            <label>Nom client :</label><br>
+            <input type="text" name="clientName" id="edit-clientName"><br>
+            <label>Nom du bateau :</label><br>
+            <input type="text" name="boatName" id="edit-boatName"><br>
+        </div>
+        <button type="submit">Enregistrer les modifications</button>
+      </form>
+    <script>
+        //Récupérer le token pour la connexion pour récupération des données
+        const token = localStorage.getItem("token");
+        console.log("Token récupéré de localStorage :", token);
+
+        async function fetchDashboard() {
+            if (!token) {
+                alert("Token non trouvé ! Veuillez vous connecter.");
+                window.location.href = "/";
+                return;
+            }
+
+            try {
+                const response = await fetch("/users", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                
+            if (response.ok) {
+                const users = await response.json();
+                console.log("Utilisateurs récupérés :", users);
+
+        // Gérer l'affichage des utilisateurs
+        const userList = document.querySelector('ul');
+        users.forEach(user => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <strong>Id :</strong> ${user.id}<br>
+                <strong>Email :</strong> ${user.email}<br>
+                <strong>Rôle :</strong> ${user.role}<br>
+                ${user.role === 'admin' ? `<strong>Nom :</strong> ${user.adminName}` : ''}
+                ${user.role === 'client' ? `<strong>Nom :</strong> ${user.clientName} <br><strong>Nom du bateau :</strong> ${user.boatName}` : ''}
+            `;
+            userList.appendChild(li);
+            });
+            } else {
+                console.error("Erreur lors de la récupération des utilisateurs");
+                alert("Erreur lors de la récupération des utilisateurs.");
+            }
+
+        } catch (error) {
+            console.error("Erreur lors de la requête API", error);
+        }
+        }
+
+    // Affichage conditionnel des champs lors du clic sur "Modifier"
+    document.querySelectorAll('.edit-user-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const user = JSON.parse(btn.dataset.user);
+
+            // Affiche le formulaire
+            document.getElementById('editUserForm').style.display = 'block';
+
+            // Remplit les champs du formulaire
+            document.getElementById('edit-id').value = user._id;
+            document.getElementById('edit-email').value = user.email || '';
+            document.getElementById('edit-password').value = '';
+            document.getElementById('edit-adminName').value = user.adminName || '';
+            document.getElementById('edit-clientName').value = user.clientName || '';
+            document.getElementById('edit-boatName').value = user.boatName || '';
+            document.getElementById('edit-role').value = user.role || '';
+
+            // Affiche les champs correspondant au rôle
+            if (user.role === 'admin') {
+                document.getElementById('editAdminFields').style.display = 'block';
+                document.getElementById('editClientFields').style.display = 'none';
+            } else if (user.role === 'client') {
+                document.getElementById('editAdminFields').style.display = 'none';
+                document.getElementById('editClientFields').style.display = 'block';
+            } else {
+                document.getElementById('editAdminFields').style.display = 'block';
+                document.getElementById('editClientFields').style.display = 'none';
+            }
+        });
+    });
+
+    //Envoi du formulaire de mise à jour
+    document.getElementById('editUserForm').addEventListener('submit', async e => {
+        e.preventDefault();
+
+        const id = document.getElementById('edit-id').value;
+
+        const data = {
+            email: document.getElementById('edit-email').value,
+            password: document.getElementById('edit-password').value,
+            adminName: document.getElementById('edit-adminName').value,
+            clientName: document.getElementById('edit-clientName').value,
+            boatName: document.getElementById('edit-boatName').value
+        };
+
+        try {
+            const res = await fetch(`/api/users/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+                alert("Utilisateur modifié !");
+                window.location.reload();
+            } else {
+                alert(`Erreur : ${result.message}`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Erreur serveur");
+        }
+    });
+
+    //Suppression d’un utilisateur
+    document.querySelectorAll('.delete-user-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            if (!confirm("Confirmer la suppression ?")) return;
+
+            try {
+                const res = await fetch(`/api/users/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (res.ok) {
+                    alert("Utilisateur supprimé");
+                    window.location.reload();
+                } else {
+                    const result = await res.json();
+                    alert(`Erreur : ${result.message}`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Erreur serveur");
+            }
+        });
+    });
+
+    //Affichage conditionnel des champs dans le formulaire d’ajout
+    const roleField = document.getElementById('role');
+    const adminFields = document.getElementById('adminFields');
+    const clientFields = document.getElementById('clientFields');
+
+    roleField.addEventListener('change', () => {
+        if (roleField.value === 'admin') {
+            adminFields.style.display = 'block';
+            clientFields.style.display = 'none';
+            document.getElementById('clientName').removeAttribute('required');
+            document.getElementById('boatName').removeAttribute('required');
+        } else if (roleField.value === 'client') {
+            adminFields.style.display = 'none';
+            clientFields.style.display = 'block';
+            document.getElementById('clientName').setAttribute('required', true);
+            document.getElementById('boatName').setAttribute('required', true);
+            document.getElementById('adminName').removeAttribute('required');
+        }
+    });
+
+    //Soumission du formulaire d’ajout
+    document.getElementById('userForm').addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const role = document.getElementById('role').value;
+        const adminName = document.getElementById('adminName') ? document.getElementById('adminName').value : null;
+        const clientName = document.getElementById('clientName').value;
+        const boatName = document.getElementById('boatName').value;
+
+        const userData = {
+            email,
+            password,
+            role,
+            adminName,
+            clientName,
+            boatName
+        };
+
+        try {
+            const formResponse = await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(userData)
+            });
+
+            const result = await formResponse.json();
+            if (formResponse.ok) {
+                alert('Utilisateur ajouté avec succès');
+                window.location.href = '/users';
+            } else {
+                console.error('Server error details:', result);
+                alert(`Erreur : ${result.message}`);
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'ajout de l\'utilisateur', error);
+            alert('Une erreur est survenue lors de l\'ajout de l\'utilisateur.');
+        }
+    });
+    </script>
+</body>
+</html>

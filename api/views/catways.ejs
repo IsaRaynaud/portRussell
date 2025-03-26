@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestion des pontons</title>
+</head>
+<body>
+  <h1>Gestion des pontons</h1>
+  <!-- <button><a href="/users/administrateurs">Retour au tableau de bord</a></button> -->
+
+  <h2>Liste des pontons</h2>
+  <ul id="catway-list"></ul>
+
+  <!-- Section pour les admin uniquement -->
+  <div id="admin-actions" style="display: none;">
+    <h2>Ajouter un ponton</h2>
+    <form id="addCatwayForm">
+      <label>Numéro :</label>
+      <input type="number" name="catwayNumber" required><br>
+
+      <label>Type :</label>
+      <select name="type" required>
+        <option value="short">Short</option>
+        <option value="long">Long</option>
+      </select><br>
+
+      <label>État :</label>
+      <input type="text" name="catwayState" required><br>
+
+      <button type="submit">Ajouter</button>
+    </form>
+
+    <h2>Modifier un ponton</h2>
+    <form id="editCatwayForm" style="display: none;">
+      <input type="hidden" id="edit-number">
+      <label>Type :</label>
+      <select id="edit-type">
+        <option value="short">Short</option>
+        <option value="long">Long</option>
+      </select><br>
+      <label>État :</label>
+      <input type="text" id="edit-state"><br>
+      <button type="submit">Enregistrer les modifications</button>
+    </form>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("token");
+
+    async function loadCatways() {
+      try {
+        const res = await fetch('/catways/api', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok) {
+          alert("Non autorisé, veuillez vous reconnecter.");
+          window.location.href = "/";
+          return;
+        }
+
+        const { catways, role } = await res.json();
+        const list = document.getElementById('catway-list');
+        list.innerHTML = "";
+
+        catways.forEach(catway => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <strong>Numéro :</strong> ${catway.catwayNumber}<br>
+            <strong>Type :</strong> ${catway.type}<br>
+            <strong>État :</strong> ${catway.catwayState}<br>
+          `;
+
+          if (role === 'admin') {
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Modifier';
+            editBtn.addEventListener('click', () => {
+              document.getElementById('admin-actions').style.display = 'block';
+              document.getElementById('editCatwayForm').style.display = 'block';
+              document.getElementById('edit-number').value = catway.catwayNumber;
+              document.getElementById('edit-type').value = catway.type;
+              document.getElementById('edit-state').value = catway.catwayState;
+            });
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Supprimer';
+            deleteBtn.addEventListener('click', async () => {
+              if (!confirm("Supprimer ce ponton ?")) return;
+
+              const delRes = await fetch(`/catways/${catway.catwayNumber}`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+
+              if (delRes.ok) {
+                alert("Ponton supprimé");
+                location.reload();
+              } else {
+                const result = await delRes.json();
+                alert(`Erreur : ${result.message}`);
+              }
+            });
+
+            li.appendChild(editBtn);
+            li.appendChild(deleteBtn);
+          }
+
+            const reserveBtn = document.createElement('button');
+            reserveBtn.textContent = 'Réserver';
+            reserveBtn.addEventListener('click', async () => {
+                try {
+                    const res = await fetch(`/catways/${catway.catwayNumber}/reservations/check-access`, {
+                        method: 'GET',
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+
+                    if (res.ok) {
+                        window.location.href = `/catways/${catway.catwayNumber}/reservations`;
+                    } else {
+                    alert("Accès refusé.");
+                    }
+                } catch (err) {
+                    alert("Erreur réseau");
+                    console.error(err);
+                }
+            });
+            
+            li.appendChild(reserveBtn);
+            list.appendChild(li);
+        });
+
+        if (role === 'admin') {
+          document.getElementById('admin-actions').style.display = 'block';
+        }
+
+      } catch(err) {
+        console.error("Erreur:", err);
+        alert("Erreur serveur.");
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadCatways);
+
+    // Ajouter un catway
+    document.getElementById('addCatwayForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+
+      const data = {
+        catwayNumber: form.catwayNumber.value,
+        type: form.type.value,
+        catwayState: form.catwayState.value
+      };
+
+      try {
+        const res = await fetch('/catways', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          alert('Ponton ajouté !');
+          location.reload();
+        } else {
+          const result = await res.json();
+          alert(`Erreur : ${result.message}`);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Erreur serveur");
+      }
+    });
+
+    // Modifier un catway
+    document.getElementById('editCatwayForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const number = document.getElementById('edit-number').value;
+      const type = document.getElementById('edit-type').value;
+      const state = document.getElementById('edit-state').value;
+
+      const data = { type, catwayState: state };
+
+      try {
+        const res = await fetch(`/catways/${number}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          alert("Ponton modifié");
+          location.reload();
+        } else {
+          const result = await res.json();
+          alert(`Erreur : ${result.message}`);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Erreur serveur");
+      }
+    });
+  </script>
+</body>
+</html>
