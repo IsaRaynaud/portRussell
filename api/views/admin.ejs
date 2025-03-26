@@ -20,7 +20,7 @@
         <div>
             <h2>Gestion des pontons</h2>
             <p>Cliquez ici pour afficher la Liste de tous les pontons du port :</p>
-            <button><a href="/catways">Liste des pontons</a></button>
+            <button id="goToCatways">Liste des pontons</button>
         </div>
         <div>
             <h2>Gestion des réservations</h2>
@@ -35,15 +35,12 @@
     <script>
         async function fetchDashboard() {
             const token = localStorage.getItem("token");
-            console.log("Token récupéré de localStorage :", token);
 
             if (!token) {
                 alert("Token non trouvé ! Veuillez vous connecter.");
                 window.location.href = "/";
                 return;
             }
-
-            console.log("Token envoyé:", token);
 
             try {
                 const response = await fetch("/users/admin-data", {
@@ -52,9 +49,6 @@
                         "Authorization": `Bearer ${token}`
                     }
                 });
-
-                console.log("En-têtes de la requête : ", {
-            "Authorization": `Bearer ${token}`});
 
 
             } catch (error) {
@@ -70,6 +64,25 @@
         document.getElementById("logout-btn").addEventListener("click", logout);
 
         fetchDashboard();
+
+document.getElementById("goToCatways").addEventListener("click", async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return window.location.href = "/";
+
+    // Appel à une route de vérif (optionnel)
+    const res = await fetch("/users/admin-data", {
+        method: "GET",
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+    });
+
+    if (res.ok) {
+        window.location.href = "/catways";
+    } else {
+        alert("Accès refusé.");
+    }
+});
     </script>
 </body>
 </html>

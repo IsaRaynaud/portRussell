@@ -5,57 +5,124 @@
   <title>Gestion des pontons</title>
 </head>
 <body>
-  <h1>Gestion des pontons (Catways)</h1>
-  <p>Liste des catways avec options d'ajout, de modification ou de suppression.</p>
+  <h1>Gestion des pontons</h1>
+  <p>Liste des pontons.</p>
 
-  <h2>Liste des catways</h2>
-  <ul>
-    <% catways.forEach(catway => { %>
-      <li>
-        <strong>Numéro :</strong> <%= catway.catwayNumber %><br>
-        <strong>Type :</strong> <%= catway.type %><br>
-        <strong>État :</strong> <%= catway.catwayState %><br>
-        <button class="edit-catway-btn" data-catway='<%- JSON.stringify(catway) %>'>Modifier</button>
-        <button class="delete-catway-btn" data-id="<%= catway.catwayNumber %>">Supprimer</button>
-      </li>
-    <% }); %>
-  </ul>
+  <h2>Liste des pontons</h2>
+  <ul id="catway-list"></ul>
 
-  <h2>Ajouter un catway</h2>
-  <form id="addCatwayForm">
-    <label>Numéro :</label>
-    <input type="number" name="catwayNumber" required><br>
+  <!-- Section pour les admin uniquement -->
+  <div id="admin-actions" style="display: none;">
+    <h2>Ajouter un ponton</h2>
+    <form id="addCatwayForm">
+      <label>Numéro :</label>
+      <input type="number" name="catwayNumber" required><br>
 
-    <label>Type :</label>
-    <select name="type" required>
-      <option value="short">Short</option>
-      <option value="long">Long</option>
-    </select><br>
+      <label>Type :</label>
+      <select name="type" required>
+        <option value="short">Short</option>
+        <option value="long">Long</option>
+      </select><br>
 
-    <label>État :</label>
-    <input type="text" name="catwayState" required><br>
+      <label>État :</label>
+      <input type="text" name="catwayState" required><br>
 
-    <button type="submit">Ajouter</button>
-  </form>
+      <button type="submit">Ajouter</button>
+    </form>
 
-  <h2>Modifier un catway</h2>
-  <form id="editCatwayForm" style="display: none;">
-    <input type="hidden" id="edit-number">
-
-    <label>Type :</label>
-    <select id="edit-type">
-      <option value="short">Short</option>
-      <option value="long">Long</option>
-    </select><br>
-
-    <label>État :</label>
-    <input type="text" id="edit-state"><br>
-
-    <button type="submit">Enregistrer les modifications</button>
-  </form>
+    <h2>Modifier un ponton</h2>
+    <form id="editCatwayForm" style="display: none;">
+      <input type="hidden" id="edit-number">
+      <label>Type :</label>
+      <select id="edit-type">
+        <option value="short">Short</option>
+        <option value="long">Long</option>
+      </select><br>
+      <label>État :</label>
+      <input type="text" id="edit-state"><br>
+      <button type="submit">Enregistrer les modifications</button>
+    </form>
+  </div>
 
   <script>
     const token = localStorage.getItem("token");
+
+    async function loadCatways() {
+      try {
+        const res = await fetch('/catways/api', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok) {
+          alert("Non autorisé, veuillez vous reconnecter.");
+          window.location.href = "/";
+          return;
+        }
+
+        const { catways, role } = await res.json();
+        const list = document.getElementById('catway-list');
+        list.innerHTML = "";
+
+        catways.forEach(catway => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <strong>Numéro :</strong> ${catway.catwayNumber}<br>
+            <strong>Type :</strong> ${catway.type}<br>
+            <strong>État :</strong> ${catway.catwayState}<br>
+          `;
+
+          if (role === 'admin') {
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Modifier';
+            editBtn.addEventListener('click', () => {
+              document.getElementById('admin-actions').style.display = 'block';
+              document.getElementById('editCatwayForm').style.display = 'block';
+              document.getElementById('edit-number').value = catway.catwayNumber;
+              document.getElementById('edit-type').value = catway.type;
+              document.getElementById('edit-state').value = catway.catwayState;
+            });
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Supprimer';
+            deleteBtn.addEventListener('click', async () => {
+              if (!confirm("Supprimer ce ponton ?")) return;
+
+              const delRes = await fetch(`/catways/${catway.catwayNumber}`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+
+              if (delRes.ok) {
+                alert("Ponton supprimé");
+                location.reload();
+              } else {
+                const result = await delRes.json();
+                alert(`Erreur : ${result.message}`);
+              }
+            });
+
+            li.appendChild(editBtn);
+            li.appendChild(deleteBtn);
+          }
+
+          list.appendChild(li);
+        });
+
+        if (role === 'admin') {
+          document.getElementById('admin-actions').style.display = 'block';
+        }
+
+      } catch (err) {
+        console.error("Erreur:", err);
+        alert("Erreur serveur.");
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadCatways);
 
     // Ajouter un catway
     document.getElementById('addCatwayForm').addEventListener('submit', async (e) => {
@@ -79,7 +146,7 @@
         });
 
         if (res.ok) {
-          alert('Catway ajouté !');
+          alert('Ponton ajouté !');
           location.reload();
         } else {
           const result = await res.json();
@@ -91,47 +158,7 @@
       }
     });
 
-    // Supprimer un catway
-    document.querySelectorAll('.delete-catway-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.dataset.id;
-        if (!confirm("Supprimer ce catway ?")) return;
-
-        try {
-          const res = await fetch(`/catways/${id}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          if (res.ok) {
-            alert("Catway supprimé");
-            location.reload();
-          } else {
-            const result = await res.json();
-            alert(`Erreur : ${result.message}`);
-          }
-        } catch (err) {
-          console.error(err);
-          alert("Erreur serveur");
-        }
-      });
-    });
-
     // Modifier un catway
-    document.querySelectorAll('.edit-catway-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const catway = JSON.parse(btn.dataset.catway);
-
-        document.getElementById('editCatwayForm').style.display = 'block';
-        document.getElementById('edit-number').value = catway.catwayNumber;
-        document.getElementById('edit-type').value = catway.type;
-        document.getElementById('edit-state').value = catway.catwayState;
-      });
-    });
-
-    // Soumettre le formulaire de mise à jour
     document.getElementById('editCatwayForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -152,7 +179,7 @@
         });
 
         if (res.ok) {
-          alert("Catway modifié");
+          alert("Ponton modifié");
           location.reload();
         } else {
           const result = await res.json();
