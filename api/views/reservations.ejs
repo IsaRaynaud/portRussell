@@ -11,7 +11,7 @@
 
     <h2>Ajouter une réservation</h2>
     <form id="add-res-form">
-      <input type="text" name="clientName" placeholder="Nom client" required>
+      <input type="text" id="clientName" name="clientName" placeholder="Nom client" required>
       <input type="text" name="boatName" placeholder="Nom bateau" required>
       <input type="date" name="checkIn" required>
       <input type="date" name="checkOut" required>
@@ -40,6 +40,17 @@
 
         const { reservations, role, clientName, empty } = await res.json();
 
+        const clientNameInput = document.getElementById('clientName');
+        if (clientNameInput) {
+            if (role === "client" && clientName) {
+                clientNameInput.value = clientName;
+                clientNameInput.ReadOnly = true;
+            } else {
+                clientNameInput.value = "";
+                clientNameInput.ReadOnly = false;
+            }
+        }
+
         const list = document.getElementById("reservation-list");
         list.innerHTML = "";
 
@@ -50,12 +61,13 @@
 
         reservations.forEach(r => {
         const li = document.createElement('li');
+        const isOwner = clientName && r.clientName.trim().toLowerCase() === clientName.trim().toLowerCase();
         li.innerHTML = `
             <strong>Nom du client :</strong> ${r.clientName}<br>
             <strong>Nom du bateau :</strong> ${r.boatName}<br>
             <strong>Arrivée au ponton le :</strong> ${new Date(r.checkIn).toLocaleDateString()}<br>
             <strong>Départ du ponton le :</strong> ${new Date(r.checkOut).toLocaleDateString()}
-            ${role === "admin" || r.clientName === clientName ? `
+            ${role === "admin" || isOwner ? `
             <br>
             <button class="delete-btn" data-id="${r._id}">Supprimer</button>
             ` : ""}

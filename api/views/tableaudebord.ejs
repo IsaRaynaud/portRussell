@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de bord - client</title>
+    <title>Tableau de bord - Client</title>
 </head>
 <body>
     <header>
@@ -11,10 +11,11 @@
         <h1>Tableau de bord</h1>
     </header>
     <main>
-        <p>A partir de cette page, vous pourrez gérer les réservations des pontons pour votre bateau.</p>
+        <p>A partir de cette page, vous pourrez gérer vos réservations de ponton pour votre bateau.</p>
         <div>
-            <h2>Gestion des réservations</h2>
-            <p>???</p>
+            <h2>Liste des pontons pour gérer les réservations</h2>
+            <p>Cliquez ici pour afficher la Liste de tous les pontons du port :</p>
+            <button id="goToCatways">Liste des pontons</button>
         </div>
 
         <button id="logout-btn">Se déconnecter</button>
@@ -33,22 +34,14 @@
             }
 
             try {
-                const response = await fetch("/users/client-data", {
+                const response = await fetch("/users/admin-data", {
                     method: "GET",
                     headers: {
                         "Authorization": `Bearer ${token}`
                     }
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    document.getElementById("dashboard-content").innerHTML = "<p>" + data.message + "</p>";
-                } else {
-                    console.log("Erreur lors de l'accès au tableau de bord");
-                    const errorData = await response.json();
-                    alert(errorData.message || "Erreur inconnue");
 
-                }
             } catch (error) {
                 console.error("Erreur lors de la requête API", error);
             }
@@ -62,6 +55,12 @@
         document.getElementById("logout-btn").addEventListener("click", logout);
 
         fetchDashboard();
+
+        document.getElementById("goToCatways").addEventListener("click", async () => {
+            const token = localStorage.getItem("token");
+            if (!token) return window.location.href = "/";    
+            window.location.href = "/catways";
+        });
     </script>
 </body>
 </html>
