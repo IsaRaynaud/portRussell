@@ -6,16 +6,13 @@ exports.checkJWT = async (req, res, next) => {
     console.log("Requête reçue avec Authorization :", req.headers['authorization']);
     console.log("Requête reçue avec x-access-token :", req.headers['x-access-token']);
 
-    if (token && token.startsWith('Bearer')) {
-        token = token.slice(7, token.length);
-    }
-
     if (token) {
         jwt.verify(token, SECRET_KEY, (err, decoded) => {
             if (err) {
                 return res.status(401).json({ message: "Token non valide"});
             } else {
                 req.user = decoded.user;
+                console.log("Utilisateur décodé:", decoded.user);
                 next();
             }
         });

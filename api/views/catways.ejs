@@ -6,7 +6,7 @@
 </head>
 <body>
   <h1>Gestion des pontons</h1>
-  <p>Liste des pontons.</p>
+  <button><a href="/users/administrateurs">Retour au tableau de bord</a></button>
 
   <h2>Liste des pontons</h2>
   <ul id="catway-list"></ul>
@@ -109,14 +109,37 @@
             li.appendChild(deleteBtn);
           }
 
-          list.appendChild(li);
+            const reserveBtn = document.createElement('button');
+            reserveBtn.textContent = 'Réserver';
+            reserveBtn.addEventListener('click', async () => {
+                try {
+                    const res = await fetch(`/catways/${catway.catwayNumber}/reservations/check-access`, {
+                        method: 'GET',
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+
+                    if (res.ok) {
+                        window.location.href = `/catways/${catway.catwayNumber}/reservations`;
+                    } else {
+                    alert("Accès refusé.");
+                    }
+                } catch (err) {
+                    alert("Erreur réseau");
+                    console.error(err);
+                }
+            });
+            
+            li.appendChild(reserveBtn);
+            list.appendChild(li);
         });
 
         if (role === 'admin') {
           document.getElementById('admin-actions').style.display = 'block';
         }
 
-      } catch (err) {
+      } catch(err) {
         console.error("Erreur:", err);
         alert("Erreur serveur.");
       }

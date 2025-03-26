@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const Catway = require('../models/catway');
+const Reservation = require('../models/reservation');
 const service = require('../services/catways');
 const { checkJWT, isAdmin, isClient, isAdminOrClient } = require('../middlewares/private');
 
@@ -9,6 +10,15 @@ const { checkJWT, isAdmin, isClient, isAdminOrClient } = require('../middlewares
 router.get('/', (req, res, next) => {
     console.log("Route GET/catways appelée");
 res.render('catways');
+});
+
+//Routes vers la vue reservations.ejs
+router.get('/:catwayNumber/reservations', (req, res, next) => {
+    res.render('reservations', { catwayNumber: req.params.catwayNumber });
+});
+
+router.get('/:catwayNumber/reservations/check-access', checkJWT, isAdminOrClient, (req, res) => {
+    res.status(200).json({ message: "Accès autorisé" });
 });
 
 //Routes API protégées
