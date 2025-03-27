@@ -92,7 +92,6 @@
     <script>
         //Récupérer le token pour la connexion pour récupération des données
         const token = localStorage.getItem("token");
-        console.log("Token récupéré de localStorage :", token);
 
         async function fetchDashboard() {
             if (!token) {
@@ -112,7 +111,6 @@
                 
             if (response.ok) {
                 const users = await response.json();
-                console.log("Utilisateurs récupérés :", users);
 
         // Gérer l'affichage des utilisateurs
         const userList = document.querySelector('ul');

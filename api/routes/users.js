@@ -4,7 +4,6 @@ const router = express.Router();
 const service = require('../services/users');
 const { checkJWT, isAdmin, isClient } = require('../middlewares/private');
 
-console.log("usersRouter chargé");
 
 router.post('/login', service.authenticate);
 
@@ -28,7 +27,6 @@ router.get('/client-data', checkJWT, isClient, (req, res, next) => {
 //Routes pour la gestion des utilisateurs
 //Liste
 router.get('/', async (req, res, next) => {
-    console.log("Route GET/users appelée");
 
     try {
         const users = await service.getAll();
@@ -41,8 +39,6 @@ router.get('/', async (req, res, next) => {
 
 //Ajout
 router.post('/', async (req, res) => {
-    console.log("POST/ route reçue: " + req.originalUrl);
-    console.log("Requête reçue pour ajout d'un utilisateur :", req.body);
 
     const { email, password, role, adminName, clientName, boatName } = req.body;
 
@@ -50,7 +46,7 @@ router.post('/', async (req, res) => {
         return res.status(400).json({ message: "Email manquant" });
     }
 
-    const isApi = req.originalUrl.startsWith('/api/');
+    const isApi = req.headers.accept?.includes("application/json");
 
     try {
         const newUser = await service.add(req.body);

@@ -35,4 +35,4 @@ const Client = User.discriminator('client', new mongoose.Schema({
     }
 }, options));
 
-module.exports = {User, Admin, Client};
+module.exports = { User, Admin, Client };

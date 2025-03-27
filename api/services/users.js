@@ -6,7 +6,6 @@ const { User, Admin, Client } = require('../models/users');
 exports.authenticate = async (req, res, next) => {
     try {
         const {email, password} = req.body;
-        console.log("Tentative de connexion avec : ", email);
 
         const user = await User.findOne({email});
 
@@ -46,10 +45,7 @@ exports.authenticate = async (req, res, next) => {
 //Callback pour afficher la liste de tous les utilisateurs
 exports.getAll = async (req, res, next) => {
     try {
-        console.log("Modèle User :", User);
         const users = await User.find({}, '-password');
-
-        console.log("Utilisateurs récupérés :", users.length);
         return users;
     } catch (error) {
         throw new Error("Erreur lors de la récupération des utilisateurs: " + error.message);
@@ -58,8 +54,6 @@ exports.getAll = async (req, res, next) => {
 
 //Callback pour ajouter un utilisateur
 exports.add = async (userData) => {
-    console.log("Requête reçue pour ajout d'un utilisateur :", userData);
-
     const { email, password, role, adminName, clientName, boatName } = userData;
 
     if (!email || !password || !role) {
@@ -79,8 +73,6 @@ exports.add = async (userData) => {
     }
 
     await newUser.save();
-    console.log("✅ Utilisateur ajouté :", newUser);
-
     return newUser;
 };
 

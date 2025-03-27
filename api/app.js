@@ -24,8 +24,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Debug middleware pour afficher toutes les requêtes reçues
 app.use((req, res, next) => {
-    console.log(`🛰  ${req.method} ${req.originalUrl}`);
-    console.log("📦 Body reçu :", req.body);
     next();
 });
 
