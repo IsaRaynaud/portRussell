@@ -65,24 +65,11 @@
 
         fetchDashboard();
 
-document.getElementById("goToCatways").addEventListener("click", async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return window.location.href = "/";
-
-    // Appel à une route de vérif (optionnel)
-    const res = await fetch("/users/admin-data", {
-        method: "GET",
-        headers: {
-            "Authorization": `Bearer ${token}`
-        }
-    });
-
-    if (res.ok) {
-        window.location.href = "/catways";
-    } else {
-        alert("Accès refusé.");
-    }
-});
+        document.getElementById("goToCatways").addEventListener("click", async () => {
+            const token = localStorage.getItem("token");
+            if (!token) return window.location.href = "/";    
+            window.location.href = "/catways";
+        });
     </script>
 </body>
 </html>

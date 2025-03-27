@@ -23,7 +23,7 @@
         <button type="submit">Se connecter</button>
     </form>
     <h2>Par où commencer ?</h2>
-    <p>Si c'est votre première connexion, n'hésitez pa sà lire notre documentation pour utiliser notre site.</p>
+    <p>Si c'est votre première connexion, n'hésitez pas à <a href="/documentation">lire la documentation</a> pour utiliser notre site.</p>
     <script>
         document.querySelector("#login-form").addEventListener("submit", async (e) => {
             e.preventDefault();    
@@ -39,10 +39,8 @@
                 });
     
                 const data = await response.json();
-                console.log("Réponse du serveur :", data);
     
                 if (response.ok) {
-                    console.log("Token reçu:", data.token);
                     localStorage.setItem("token", data.token);
 
                     console.log("Token enregistré dans localStorage :", localStorage.getItem("token"));
